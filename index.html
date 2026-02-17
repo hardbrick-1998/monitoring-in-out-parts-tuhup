@@ -3,14 +3,50 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>MONITORING PARTS IN-OUT TUHUP</title>
+    <title>MONITORING PARTS TUHUP</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.39.0/build/stlite.css" />
     <style>
+      /* Import Font Techno */
       @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-      :root { --neon-blue: #00f3ff; --neon-pink: #ff00ff; --bg-black: #050505; }
-      body { background-color: var(--bg-black); color: #fff; font-family: 'Share Tech Mono', monospace; }
-      .stApp { border: 1px solid var(--neon-pink); box-shadow: inset 0 0 20px var(--neon-pink); }
+      
+      /* DEFINISI WARNA CYBERPUNK BARU */
+      :root {
+        --cyan: #00f3ff;   /* Warna Utama (Border, Judul) */
+        --green: #39ff14;  /* Warna Sukses/Masuk */
+        --red: #ff003c;    /* Warna Aksen/Keluar */
+        --bg: #050505;     /* Hitam Pekat */
+        --card-bg: #0a0f0d; /* Hitam kehijauan dikit */
+      }
+
+      body { background-color: var(--bg); color: #e0e0e0; font-family: 'Share Tech Mono', monospace; }
+      
+      /* Styling Container Utama */
+      .stApp {
+        background-image: linear-gradient(rgba(5, 5, 5, 0.95), rgba(5, 5, 5, 0.95)), 
+                          url("https://www.transparenttextures.com/patterns/circuit-board.png");
+        border: 1px solid var(--cyan);
+        box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+      }
+
+      /* Judul & Header */
+      h1, h2, h3 { color: var(--cyan) !important; text-shadow: 0 0 8px var(--cyan); }
+      
+      /* Metric Box (Kotak Angka) */
+      div[data-testid="stMetricValue"] { color: var(--green) !important; text-shadow: 0 0 5px var(--green); }
+      div[data-testid="stMetricLabel"] { color: var(--cyan) !important; }
+
+      /* Tombol / Widget */
+      .stButton>button {
+        border: 1px solid var(--green);
+        color: var(--green);
+        background: transparent;
+      }
+      .stButton>button:hover {
+        background: var(--green);
+        color: black;
+        box-shadow: 0 0 15px var(--green);
+      }
     </style>
   </head>
   <body>
@@ -18,7 +54,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.39.0/build/stlite.js"></script>
     <script>
       stlite.mount({
-        requirements: ["pandas", "plotly"],
+        // TAMBAHKAN 'pyarrow' DI SINI UNTUK MEMPERBAIKI ERROR
+        requirements: ["pandas", "plotly", "pyarrow"],
         entrypoint: "app.py",
         files: {
           "app.py": `
@@ -26,49 +63,100 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-st.set_page_config(layout="wide")
+# Konfigurasi Halaman
+st.set_page_config(layout="wide", page_title="MONITORING TUHUP")
 
-# Header Cyberpunk
-st.markdown("<h1 style='text-align: center; color: #ff00ff; text-shadow: 0 0 15px #ff00ff;'> > MONITORING PARTS IN-OUT TUHUP _</h1>", unsafe_allow_html=True)
-st.write("---")
+# --- HEADER SECTION ---
+st.markdown("<h1 style='text-align: center; letter-spacing: 3px;'>// MONITORING PARTS IN-OUT TUHUP //</h1>", unsafe_allow_html=True)
+st.markdown(f"<hr style='border: 1px solid #00f3ff; box-shadow: 0 0 5px #00f3ff;'>", unsafe_allow_html=True)
 
-# Ringkasan Stok
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric(label="TOTAL PARTS IN", value="1,240", delta="+12")
-with col2:
-    st.metric(label="TOTAL PARTS OUT", value="890", delta="-5")
-with col3:
-    st.metric(label="CURRENT STOCK", value="350", delta="Stable")
+# --- BAGIAN 1: SCORECARD (RINGKASAN) ---
+# Kita buat 4 kolom agar lebih informatif
+c1, c2, c3, c4 = st.columns(4)
 
-# Visualisasi Monitoring
-st.markdown("### 📊 Movement Analysis")
-data = {
-    'Tanggal': pd.date_range(start='2026-02-01', periods=7),
-    'In': [10, 25, 15, 30, 10, 45, 20],
-    'Out': [5, 15, 20, 10, 25, 10, 15]
+with c1:
+    st.metric(label="TOTAL ITEM IN (JAN)", value="1,240 PCS", delta="+120")
+with c2:
+    st.metric(label="TOTAL ITEM OUT (JAN)", value="890 PCS", delta="-45", delta_color="inverse")
+with c3:
+    # Warna custom untuk stok pakai HTML render di markdown kalau mau lebih spesifik, tapi metric bawaan sudah oke
+    st.metric(label="STOCK LEVEL", value="SAFE", delta="Stable")
+with c4:
+    st.metric(label="CRITICAL PARTS", value="5 ITEMS", delta="Need Order", delta_color="inverse")
+
+# --- BAGIAN 2: DATA EXCEL SIMULASI ---
+# Membuat data dummy yang strukturnya mirip file Excel kamu
+data_in = {
+    'TANGGAL': ['01-Jan-2026', '02-Jan-2026', '03-Jan-2026', '03-Jan-2026', '05-Jan-2026'],
+    'PO': ['1011803181', '1011776442', '1011800555', '1011814886', '1011818350'],
+    'MATDOC': ['5001193892', '5001193890', '5001193879', '5001193878', '5001195370'],
+    'QTY_IN': [2, 50, 2, 4, 10], # Anggap unit sudah dikonversi ke angka
+    'SATUAN': ['IBC', 'EA', 'IBC', 'DRUM', 'IBC']
 }
-df = pd.DataFrame(data)
+df_in = pd.DataFrame(data_in)
 
-fig = px.line(df, x='Tanggal', y=['In', 'Out'], 
-              title="Daily Parts Movement (Site Tuhup)",
-              color_discrete_map={"In": "#00f3ff", "Out": "#ff00ff"})
-fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#00f3ff")
-st.plotly_chart(fig, use_container_width=True)
+data_out = {
+    'TANGGAL': ['01-Jan-2026', '01-Jan-2026', '02-Jan-2026', '03-Jan-2026', '03-Jan-2026'],
+    'MATDOC_OUT': ['-', '-', '500119xxxx', '-', '-'],
+    'QTY_OUT': [2, 1, 40, 1, 4],
+    'REMARKS': ['ATF', 'SAE80W90', 'TYRE 18PR', 'T50', 'GREASE']
+}
+df_out = pd.DataFrame(data_out)
 
-# Tabel Monitoring Terbaru
-st.markdown("### 📑 Recent Transactions")
-table_data = pd.DataFrame({
-    "Part ID": ["P-001", "P-042", "P-109", "P-005"],
-    "Status": ["IN", "OUT", "IN", "OUT"],
-    "Qty": [5, 1, 10, 2],
-    "User": ["Admin_Tuhup", "User_Ops", "Log_Team", "Admin_Tuhup"]
-})
-st.table(table_data)
+# --- BAGIAN 3: GRAFIK MONITORING ---
+st.write("---")
+col_grafik, col_tabel = st.columns([2, 1])
 
-st.sidebar.title("System Status")
-st.sidebar.success("OFFLINE MODE READY")
-st.sidebar.info("Last Sync: 2026-02-17 16:00")
+with col_grafik:
+    st.markdown("### 📈 ANALISA PERGERAKAN HARIAN")
+    
+    # Gabung data untuk grafik sederhana
+    # Kita pastikan format tanggal aman
+    df_chart = pd.DataFrame({
+        "Tanggal": ["01-Jan", "02-Jan", "03-Jan", "04-Jan", "05-Jan"],
+        "Barang Masuk (IN)": [20, 50, 15, 0, 30],
+        "Barang Keluar (OUT)": [5, 40, 25, 10, 15]
+    })
+    
+    # Warna Grafik: Green untuk Masuk, Red untuk Keluar
+    fig = px.bar(df_chart, x="Tanggal", y=["Barang Masuk (IN)", "Barang Keluar (OUT)"],
+                 barmode='group',
+                 color_discrete_map={"Barang Masuk (IN)": "#39ff14", "Barang Keluar (OUT)": "#ff003c"})
+    
+    fig.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#00f3ff'),
+        legend=dict(orientation="h", y=1.1)
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+with col_tabel:
+    st.markdown("### ⚠️ LOW STOCK ALERT")
+    # Tabel stok menipis
+    stok_kritis = pd.DataFrame({
+        "Nama Part": ["TYRE 18PR", "GREASE", "FILTER OLI"],
+        "Sisa": [2, 4, 1],
+        "Status": ["CRITICAL", "LOW", "CRITICAL"]
+    })
+    
+    # Menampilkan tabel
+    st.dataframe(stok_kritis, hide_index=True, use_container_width=True)
+    
+    st.info("Pemberitahuan: Data terakhir di-update 5 menit yang lalu dari Local File.")
+
+# --- BAGIAN 4: DETAIL LOG BOOK (Mirip Excel) ---
+st.write("---")
+st.markdown("### 📑 LOG BOOK HARIAN (IN & OUT)")
+
+tab1, tab2 = st.tabs(["DATA IN (MASUK)", "DATA OUT (KELUAR)"])
+
+with tab1:
+    st.dataframe(df_in, use_container_width=True)
+
+with tab2:
+    st.dataframe(df_out, use_container_width=True)
+
           `,
         },
       }, document.getElementById("root"));
