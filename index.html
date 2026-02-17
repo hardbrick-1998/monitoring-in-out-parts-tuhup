@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>MONITORING PARTS IN-OUT TUHUP</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.39.0/build/stlite.css" />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+      :root { --neon-blue: #00f3ff; --neon-pink: #ff00ff; --bg-black: #050505; }
+      body { background-color: var(--bg-black); color: #fff; font-family: 'Share Tech Mono', monospace; }
+      .stApp { border: 1px solid var(--neon-pink); box-shadow: inset 0 0 20px var(--neon-pink); }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.39.0/build/stlite.js"></script>
+    <script>
+      stlite.mount({
+        requirements: ["pandas", "plotly"],
+        entrypoint: "app.py",
+        files: {
+          "app.py": `
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+
+st.set_page_config(layout="wide")
+
+# Header Cyberpunk
+st.markdown("<h1 style='text-align: center; color: #ff00ff; text-shadow: 0 0 15px #ff00ff;'> > MONITORING PARTS IN-OUT TUHUP _</h1>", unsafe_allow_html=True)
+st.write("---")
+
+# Ringkasan Stok
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.metric(label="TOTAL PARTS IN", value="1,240", delta="+12")
+with col2:
+    st.metric(label="TOTAL PARTS OUT", value="890", delta="-5")
+with col3:
+    st.metric(label="CURRENT STOCK", value="350", delta="Stable")
+
+# Visualisasi Monitoring
+st.markdown("### 📊 Movement Analysis")
+data = {
+    'Tanggal': pd.date_range(start='2026-02-01', periods=7),
+    'In': [10, 25, 15, 30, 10, 45, 20],
+    'Out': [5, 15, 20, 10, 25, 10, 15]
+}
+df = pd.DataFrame(data)
+
+fig = px.line(df, x='Tanggal', y=['In', 'Out'], 
+              title="Daily Parts Movement (Site Tuhup)",
+              color_discrete_map={"In": "#00f3ff", "Out": "#ff00ff"})
+fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#00f3ff")
+st.plotly_chart(fig, use_container_width=True)
+
+# Tabel Monitoring Terbaru
+st.markdown("### 📑 Recent Transactions")
+table_data = pd.DataFrame({
+    "Part ID": ["P-001", "P-042", "P-109", "P-005"],
+    "Status": ["IN", "OUT", "IN", "OUT"],
+    "Qty": [5, 1, 10, 2],
+    "User": ["Admin_Tuhup", "User_Ops", "Log_Team", "Admin_Tuhup"]
+})
+st.table(table_data)
+
+st.sidebar.title("System Status")
+st.sidebar.success("OFFLINE MODE READY")
+st.sidebar.info("Last Sync: 2026-02-17 16:00")
+          `,
+        },
+      }, document.getElementById("root"));
+    </script>
+  </body>
+</html>
